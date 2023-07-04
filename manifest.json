@@ -1,6 +1,6 @@
 {
-	"id": "obsidian-git-url",
-	"name": "Git Url Plugin",
+	"id": "git-url",
+	"name": "Git Url",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "This plugin create a url to your file on your git remote repo",
