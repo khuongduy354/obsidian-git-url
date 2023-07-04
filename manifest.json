@@ -3,8 +3,12 @@
 	"name": "Git Url Plugin",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "This plugin create a url to your file on github",
+	"description": "This plugin create a url to your file on your git remote repo",
 	"author": "khuongduy354",
 	"authorUrl": "https://github.com/khuongduy354/",
-	"isDesktopOnly": false
+	"fundingUrl": {
+		"Buy Me A Coffee": "https://www.buymeacoffee.com/khuongduy3E",
+		"Plugin Repo": "https://github.com/khuongduy354/obsidian-git-url"
+	},
+	"isDesktopOnly": true
 }
