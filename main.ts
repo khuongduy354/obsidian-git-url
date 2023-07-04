@@ -12,11 +12,13 @@ import {
 // Remember to rename these classes and interfaces!
 
 interface MyPluginSettings {
-	mySetting: string;
+	baseUrl: string;
+	hasFileExt: boolean;
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: "default",
+	baseUrl: "",
+	hasFileExt: true,
 };
 
 export default class MyPlugin extends Plugin {
@@ -85,15 +87,15 @@ export default class MyPlugin extends Plugin {
 			this.app.workspace.on("file-menu", (menu, file) => {
 				menu.addItem((item) => {
 					item.setTitle("Copy git path")
-						.setIcon("document")
+						.setIcon("link")
 						.onClick(async () => {
-							new Notice(file.path);
+							const baseUrl = this.settings.baseUrl;
+							navigator.clipboard.writeText(baseUrl + file.path);
+							new Notice("Copied to clipboard");
 						});
 				});
 			})
 		);
-
-		console.log("click", evt);
 	}
 
 	onunload() {}
@@ -143,17 +145,40 @@ class SampleSettingTab extends PluginSettingTab {
 		containerEl.createEl("h2", { text: "Settings for my awesome plugin." });
 
 		new Setting(containerEl)
-			.setName("Setting #1")
-			.setDesc("It's a secret")
+			.setName("Base Url")
+			.setDesc("The base url for your git remote repo")
 			.addText((text) =>
 				text
-					.setPlaceholder("Enter your secret")
-					.setValue(this.plugin.settings.mySetting)
-					.onChange(async (value) => {
-						console.log("Secret: " + value);
-						this.plugin.settings.mySetting = value;
+					.setPlaceholder(
+						"e.g: https://gitlab.com/username/obsidian-notes/-/blob/master/"
+					)
+					.setValue(this.plugin.settings.baseUrl)
+					.onChange(async (value: string) => {
+						this.plugin.settings.baseUrl = value;
 						await this.plugin.saveSettings();
 					})
 			);
+
+		new Setting(containerEl)
+			.setName("Has File Extension")
+			.setDesc(
+				"Whether the copied link include file extension (.md) or not"
+			)
+			.addToggle((toggle) => {
+				toggle
+					.setValue(this.plugin.settings.hasFileExt)
+					.onChange((value: boolean) => {
+						this.plugin.settings.hasFileExt = value;
+						this.plugin.saveSettings();
+					});
+			});
+		// .addText((text) =>
+		// 	text
+		// 		.setValue(this.plugin.settings.hasFileExt)
+		// 		.onChange(async (value) => {
+		// 			this.plugin.settings.hasFileExt = value;
+		// 			await this.plugin.saveSettings();
+		// 		})
+		// );
 	}
 }
