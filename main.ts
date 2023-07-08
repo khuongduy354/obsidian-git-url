@@ -11,12 +11,10 @@ import {
 
 interface GitUrlPluginSetting {
 	baseUrl: string;
-	hasFileExt: boolean;
 }
 
 const DEFAULT_SETTINGS: GitUrlPluginSetting = {
 	baseUrl: "",
-	hasFileExt: true,
 };
 
 export default class GitUrlPlugin extends Plugin {
@@ -83,19 +81,5 @@ class GitUrlSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					})
 			);
-
-		new Setting(containerEl)
-			.setName("Has File Extension")
-			.setDesc(
-				"Whether the copied link include file extension (.md) or not"
-			)
-			.addToggle((toggle) => {
-				toggle
-					.setValue(this.plugin.settings.hasFileExt)
-					.onChange((value: boolean) => {
-						this.plugin.settings.hasFileExt = value;
-						this.plugin.saveSettings();
-					});
-			});
 	}
 }
