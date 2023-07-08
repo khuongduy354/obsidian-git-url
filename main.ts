@@ -58,9 +58,9 @@ export default class GitUrlPlugin extends Plugin {
 }
 
 class GitUrlSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+	plugin: GitUrlPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: GitUrlPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -68,7 +68,6 @@ class GitUrlSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
-		containerEl.createEl("h2", { text: "Settings for Git URL Plugin." });
 
 		new Setting(containerEl)
 			.setName("Base Url")
