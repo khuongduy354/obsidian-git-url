@@ -7,15 +7,22 @@ import {
 	Plugin,
 	PluginSettingTab,
 	Setting,
+	TFile,
 } from "obsidian";
 
 interface GitUrlPluginSetting {
 	baseUrl: string;
+	resourceBaseUrl: string;
 	selected: string;
 
+	// for git path
 	repoName: string;
 	username: string;
 	customURL: string;
+
+	// for live export
+	customResourceURL: string;
+	attachmentsFolder: string;
 }
 
 const DEFAULT_SETTINGS: GitUrlPluginSetting = {
@@ -24,6 +31,9 @@ const DEFAULT_SETTINGS: GitUrlPluginSetting = {
 	repoName: "",
 	username: "",
 	customURL: "",
+	resourceBaseUrl: "",
+	customResourceURL: "",
+	attachmentsFolder: "",
 };
 
 export default class GitUrlPlugin extends Plugin {
@@ -34,15 +44,34 @@ export default class GitUrlPlugin extends Plugin {
 
 		this.addSettingTab(new GitUrlSettingTab(this.app, this));
 
+		// Right click file event
 		this.registerEvent(
 			this.app.workspace.on("file-menu", (menu, file) => {
 				menu.addItem((item) => {
+					// File's git path to clipboard
 					item.setTitle("Copy git path")
 						.setIcon("link")
 						.onClick(async () => {
 							const baseUrl = this.settings.baseUrl;
 							navigator.clipboard.writeText(baseUrl + file.path);
 							new Notice("Copied to clipboard");
+						});
+				}).addItem((item) => {
+					// File's content with git path resources to clipboard
+					item.setTitle("Copy live content")
+						.setIcon("link")
+						.onClick(async () => {
+							const { vault } = this.app;
+							if (file instanceof TFile) {
+								const fileContent = await vault.cachedRead(
+									file
+								);
+								const baseUrl = this.settings.baseUrl;
+								const gitPath = baseUrl + file.path;
+								const gitPathContent = `<!-- ${gitPath} -->\n${fileContent}`;
+								navigator.clipboard.writeText(gitPathContent);
+								new Notice("Copied to clipboard");
+							}
 						});
 				});
 			})
@@ -101,7 +130,7 @@ class GitUrlSettingTab extends PluginSettingTab {
 		});
 
 		new Setting(containerEl)
-			.setName("Custom")
+			.setName("Custom base url")
 			.setDesc("Only use when custom is selected")
 			.addText((text) => {
 				text.setValue(this.plugin.settings.customURL)
@@ -116,36 +145,16 @@ class GitUrlSettingTab extends PluginSettingTab {
 
 		// Drop down
 		new Setting(containerEl)
-			.setHeading()
 			.setName("Repo provider option")
 			.addDropdown((dropdown) => {
-				// Update base url based on selected option
-				const updateBaseURL = () => {
-					const option = this.plugin.settings.selected;
-					let username = this.plugin.settings.username;
-					let repoName = this.plugin.settings.repoName;
-
-					username = username === "" ? "<username>" : username;
-					repoName = repoName === "" ? "<repo-name>" : repoName;
-
-					// update base repo url
-					if (option === "github") {
-						this.plugin.settings.baseUrl = `https://github.com/${username}/${repoName}/tree/main/`;
-					} else if (option === "gitlab") {
-						this.plugin.settings.baseUrl = `https://gitlab.com/${username}/${repoName}/-/blob/master/`;
-					} else if (option === "custom") {
-						this.plugin.settings.baseUrl =
-							this.plugin.settings.customURL;
-					}
-				};
-
 				dropdown.addOption("github", "Github");
 				dropdown.addOption("gitlab", "Gitlab");
 				dropdown.addOption("custom", "Custom");
 				dropdown.onChange(async (val) => {
 					this.plugin.settings.selected = val;
 
-					updateBaseURL();
+					this.updateBaseURL();
+					this.updateResourceBaseURL();
 
 					await this.plugin.saveSettings();
 				});
@@ -158,5 +167,85 @@ class GitUrlSettingTab extends PluginSettingTab {
 				new Notice(this.plugin.settings.baseUrl);
 			});
 		});
+
+		// Resource URL
+
+		new Setting(containerEl)
+			.setName("Base resource url config")
+			.setHeading()
+			.setDesc("Use to add remote path to resources when live export");
+
+		new Setting(containerEl)
+			.setName("Custom resource url")
+			.setDesc("Only use when custom in provider above is selected")
+			.addText((text) => {
+				text.setValue(this.plugin.settings.customURL).onChange(
+					async (value: string) => {
+						this.plugin.settings.customResourceURL = value;
+						await this.plugin.saveSettings();
+					}
+				);
+			});
+
+		new Setting(containerEl)
+			.setName("Attachments folder")
+			.setDesc(
+				"When attachments aren't stored in root, see Settings > Files & Links > Attachments Folder"
+			)
+			.addText((text) => {
+				text.setValue(this.plugin.settings.customURL)
+					.setPlaceholder("attachments/images/")
+					.onChange(async (value: string) => {
+						this.plugin.settings.attachmentsFolder = value;
+						await this.plugin.saveSettings();
+						this.updateResourceBaseURL();
+					});
+			});
+
+		// Show url in use
+		new Setting(containerEl).addButton((button) => {
+			button.setButtonText("Show final url");
+			button.onClick((e) => {
+				new Notice(this.plugin.settings.resourceBaseUrl);
+			});
+		});
+	}
+
+	// HELPERS
+	updateBaseURL(): void {
+		const option = this.plugin.settings.selected;
+		let username = this.plugin.settings.username;
+		let repoName = this.plugin.settings.repoName;
+
+		username = username === "" ? "<username>" : username;
+		repoName = repoName === "" ? "<repo-name>" : repoName;
+
+		// update base repo url
+		if (option === "github") {
+			this.plugin.settings.baseUrl = `https://github.com/${username}/${repoName}/tree/main/`;
+		} else if (option === "gitlab") {
+			this.plugin.settings.baseUrl = `https://gitlab.com/${username}/${repoName}/-/blob/master/`;
+		} else if (option === "custom") {
+			this.plugin.settings.baseUrl = this.plugin.settings.customURL;
+		}
+	}
+	updateResourceBaseURL() {
+		const option = this.plugin.settings.selected;
+		let username = this.plugin.settings.username;
+		let repoName = this.plugin.settings.repoName;
+
+		username = username === "" ? "<username>" : username;
+		repoName = repoName === "" ? "<repo-name>" : repoName;
+
+		let tempURL = "";
+		if (option === "gitlab") {
+			tempURL = `https://gitlab.com/${username}/${repoName}/-/raw/master/`;
+		} else if (option === "github") {
+		} else if (option === "custom") {
+			tempURL = this.plugin.settings.customResourceURL;
+		}
+		tempURL += this.plugin.settings.attachmentsFolder;
+		this.plugin.settings.resourceBaseUrl = tempURL;
+		this.plugin.saveSettings();
 	}
 }
