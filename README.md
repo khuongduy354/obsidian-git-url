@@ -15,3 +15,9 @@ This plugin is very simple, it just takes the remote repo url + file_path and ad
 
 
 
+
+# todo liveexport
+-> copy file content to clipboard, limited file size DONE  
+
+-> export disk markdown  
+-> mass file export 

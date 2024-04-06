@@ -63,19 +63,46 @@ export default class GitUrlPlugin extends Plugin {
 						.onClick(async () => {
 							const { vault } = this.app;
 							if (file instanceof TFile) {
+								// limit file size
+								if (file.stat.size > 1000000) {
+									new Notice("File size too large to copy");
+									return;
+								}
+
 								const fileContent = await vault.cachedRead(
 									file
 								);
-								const baseUrl = this.settings.baseUrl;
-								const gitPath = baseUrl + file.path;
-								const gitPathContent = `<!-- ${gitPath} -->\n${fileContent}`;
-								navigator.clipboard.writeText(gitPathContent);
+								const fileContentWithResources =
+									this.replaceResourcesLink(
+										fileContent,
+										this.settings.resourceBaseUrl
+									);
+								navigator.clipboard.writeText(
+									fileContentWithResources
+								);
 								new Notice("Copied to clipboard");
+								// const baseUrl = this.settings.baseUrl;
+								// const gitPath = baseUrl + file.path;
+								// const gitPathContent = `<!-- ${gitPath} -->\n${fileContent}`;
+								// navigator.clipboard.writeText(gitPathContent);
+								// new Notice("Copied to clipboard");
 							}
 						});
 				});
 			})
 		);
+	}
+
+	replaceResourcesLink(content: string, resourceBaseUrl: string) {
+		const resourceRegex = /!\[\[(.*)\]\]/g;
+
+		content = content.replace(resourceRegex, function (match, g1) {
+			let replaceStr = "![](" + resourceBaseUrl + g1 + ")";
+			replaceStr = replaceStr.replace(/ /g, "%20");
+
+			return replaceStr;
+		});
+		return content;
 	}
 
 	onunload() {}
@@ -150,6 +177,7 @@ class GitUrlSettingTab extends PluginSettingTab {
 				dropdown.addOption("github", "Github");
 				dropdown.addOption("gitlab", "Gitlab");
 				dropdown.addOption("custom", "Custom");
+				dropdown.setValue(this.plugin.settings.selected);
 				dropdown.onChange(async (val) => {
 					this.plugin.settings.selected = val;
 
@@ -193,7 +221,7 @@ class GitUrlSettingTab extends PluginSettingTab {
 				"When attachments aren't stored in root, see Settings > Files & Links > Attachments Folder"
 			)
 			.addText((text) => {
-				text.setValue(this.plugin.settings.customURL)
+				text.setValue(this.plugin.settings.attachmentsFolder)
 					.setPlaceholder("attachments/images/")
 					.onChange(async (value: string) => {
 						this.plugin.settings.attachmentsFolder = value;
