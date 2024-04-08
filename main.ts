@@ -251,6 +251,11 @@ class GitUrlSettingTab extends PluginSettingTab {
 		} else if (option === "custom") {
 			tempURL = this.plugin.settings.customResourceURL;
 		}
+		const attachmentsFolder = this.plugin.settings.attachmentsFolder;
+
+		if (!tempURL.endsWith("/") && !attachmentsFolder.startsWith("/"))
+			tempURL += "/";
+
 		tempURL += this.plugin.settings.attachmentsFolder;
 		this.plugin.settings.resourceBaseUrl = tempURL;
 		this.plugin.saveSettings();

@@ -19,6 +19,9 @@ export class LiveExport {
 		const resourceRegex = /!\[\[(.*)\]\]/g;
 
 		content = content.replace(resourceRegex, function (match, g1) {
+			if (!resourceBaseUrl.endsWith("/") && !g1.startsWith("/"))
+				resourceBaseUrl += "/";
+
 			let replaceStr = "![](" + resourceBaseUrl + g1 + ")";
 			replaceStr = replaceStr.replace(/ /g, "%20");
 
