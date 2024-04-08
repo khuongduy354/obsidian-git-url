@@ -1,5 +1,7 @@
 # Obsidian Git Url Plugin
-Copy a file with remote repo's link. Copy content with resources accessible on the internet (Gitlab only). 
+Copy file with remote repo's link. 
+
+Copy file content with resources accessible on the internet. 
 
 ## File's remote repo url  
 I find it inconvinient to access obsidian files from other devices, especially the ones without Obsidian installed. 
