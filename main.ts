@@ -1,3 +1,4 @@
+import { LiveExport } from "LiveExport";
 import {
 	App,
 	Editor,
@@ -61,48 +62,26 @@ export default class GitUrlPlugin extends Plugin {
 					item.setTitle("Copy live content")
 						.setIcon("link")
 						.onClick(async () => {
-							const { vault } = this.app;
 							if (file instanceof TFile) {
-								// limit file size
-								if (file.stat.size > 1000000) {
-									new Notice("File size too large to copy");
-									return;
-								}
+								const LiveExporter = new LiveExport(
+									file,
+									this.settings.resourceBaseUrl
+								);
+								const newContent =
+									await LiveExporter.getExportString();
 
-								const fileContent = await vault.cachedRead(
-									file
-								);
-								const fileContentWithResources =
-									this.replaceResourcesLink(
-										fileContent,
-										this.settings.resourceBaseUrl
+								if (!newContent)
+									return new Notice(
+										"File is too large or not a markdown file"
 									);
-								navigator.clipboard.writeText(
-									fileContentWithResources
-								);
+
+								navigator.clipboard.writeText(newContent);
 								new Notice("Copied to clipboard");
-								// const baseUrl = this.settings.baseUrl;
-								// const gitPath = baseUrl + file.path;
-								// const gitPathContent = `<!-- ${gitPath} -->\n${fileContent}`;
-								// navigator.clipboard.writeText(gitPathContent);
-								// new Notice("Copied to clipboard");
 							}
 						});
 				});
 			})
 		);
-	}
-
-	replaceResourcesLink(content: string, resourceBaseUrl: string) {
-		const resourceRegex = /!\[\[(.*)\]\]/g;
-
-		content = content.replace(resourceRegex, function (match, g1) {
-			let replaceStr = "![](" + resourceBaseUrl + g1 + ")";
-			replaceStr = replaceStr.replace(/ /g, "%20");
-
-			return replaceStr;
-		});
-		return content;
 	}
 
 	onunload() {}
