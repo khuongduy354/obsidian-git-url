@@ -155,6 +155,7 @@ class GitUrlSettingTab extends PluginSettingTab {
 			.addDropdown((dropdown) => {
 				dropdown.addOption("github", "Github");
 				dropdown.addOption("gitlab", "Gitlab");
+				dropdown.addOption("githubCS", "Github Codespace");
 				dropdown.addOption("custom", "Custom");
 				dropdown.setValue(this.plugin.settings.selected);
 				dropdown.onChange(async (val) => {
@@ -234,6 +235,8 @@ class GitUrlSettingTab extends PluginSettingTab {
 			this.plugin.settings.baseUrl = `https://gitlab.com/${username}/${repoName}/-/blob/master/`;
 		} else if (option === "custom") {
 			this.plugin.settings.baseUrl = this.plugin.settings.customURL;
+		} else if (option === "githubCS") {
+			this.plugin.settings.baseUrl = `https://github.dev/${username}/${repoName}/tree/main/`;
 		}
 	}
 	updateResourceBaseURL() {
